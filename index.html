@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CX Chat Tester | 클래스101</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #FF5722;
+      --primary-dark: #E64A19;
+      --bg-dark: #0D0D0D;
+      --bg-card: #1A1A1A;
+      --bg-input: #252525;
+      --text-primary: #FFFFFF;
+      --text-secondary: #A0A0A0;
+      --text-muted: #666666;
+      --border: #333333;
+      --success: #4CAF50;
+      --error: #F44336;
+    }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    header span {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Main */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Chat Container */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+      overflow-y: auto;
+      max-height: 50vh;
+      padding: 16px;
+      background: var(--bg-card);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .chat-container:empty::before {
+      content: '메시지를 보내면 여기에 대화가 표시됩니다';
+      color: var(--text-muted);
+      text-align: center;
+      padding: 40px;
+    }
+
+    .message {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 15px;
+      line-height: 1.5;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      background: var(--primary);
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.bot {
+      background: var(--bg-input);
+      color: var(--text-primary);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .message.error {
+      background: rgba(244, 67, 54, 0.2);
+      border: 1px solid var(--error);
+      color: var(--error);
+    }
+
+    .message.loading {
+      background: var(--bg-input);
+      color: var(--text-muted);
+    }
+
+    .message.loading::after {
+      content: '';
+      animation: dots 1.5s infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+
+    /* Settings */
+    .settings {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .settings-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .settings-header h3 {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .settings-toggle {
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+
+    .settings.open .settings-toggle {
+      transform: rotate(180deg);
+    }
+
+    .settings-body {
+      display: none;
+      margin-top: 16px;
+      gap: 12px;
+      flex-direction: column;
+    }
+
+    .settings.open .settings-body {
+      display: flex;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .form-group input {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: var(--text-primary);
+      font-family: 'Pretendard', sans-serif;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .form-group input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .form-group select {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: var(--text-primary);
+      font-family: 'Pretendard', sans-serif;
+      transition: border-color 0.2s;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .url-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .url-badge.prod {
+      background: rgba(76, 175, 80, 0.2);
+      color: #4CAF50;
+    }
+
+    .url-badge.test {
+      background: rgba(255, 152, 0, 0.2);
+      color: #FF9800;
+    }
+
+    /* Input Area */
+    .input-area {
+      display: flex;
+      gap: 12px;
+      background: var(--bg-card);
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .input-area textarea {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 15px;
+      color: var(--text-primary);
+      font-family: 'Pretendard', sans-serif;
+      resize: none;
+      min-height: 52px;
+      max-height: 150px;
+      transition: border-color 0.2s;
+    }
+
+    .input-area textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .input-area textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    .send-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Pretendard', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .send-btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .send-btn:active {
+      transform: translateY(0);
+    }
+
+    .send-btn:disabled {
+      background: var(--text-muted);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .send-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Footer */
+    footer {
+      padding: 16px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    /* Response Details */
+    .response-details {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+      main {
+        padding: 16px;
+      }
+
+      .input-area {
+        flex-direction: column;
+      }
+
+      .send-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">C</div>
+    <h1>CX Chat Tester</h1>
+    <span>클래스101 Webhook 테스트</span>
+  </header>
+
+  <main>
+    <div class="settings" id="settings">
+      <div class="settings-header" onclick="toggleSettings()">
+        <h3>⚙️ 설정</h3>
+        <span class="settings-toggle">▼</span>
+      </div>
+      <div class="settings-body">
+        <div class="form-group">
+          <label>Webhook URL <span class="url-badge prod" id="urlBadge">PROD</span></label>
+          <select id="webhookUrl" onchange="updateUrlBadge()">
+            <option value="https://mkt-n8n.class101.net/webhook/chat">🟢 Production - /webhook/chat</option>
+            <option value="https://mkt-n8n.class101.net/webhook/cxchat">🟢 Production - /webhook/cxchat</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>User ID</label>
+          <input type="text" id="userId" value="cx_tester_001" placeholder="User ID 입력">
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-container" id="chatContainer"></div>
+
+    <div class="input-area">
+      <textarea 
+        id="messageInput" 
+        placeholder="메시지를 입력하세요... (Enter로 전송, Shift+Enter로 줄바꿈)"
+        rows="1"
+      ></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/>
+        </svg>
+        전송
+      </button>
+    </div>
+  </main>
+
+  <footer>
+    Made with ❤️ for <a href="https://class101.net" target="_blank">클래스101</a> CX Team
+  </footer>
+
+  <script>
+    const chatContainer = document.getElementById('chatContainer');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const webhookUrlInput = document.getElementById('webhookUrl');
+    const userIdInput = document.getElementById('userId');
+
+    // Auto-resize textarea
+    messageInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+    });
+
+    // Enter to send, Shift+Enter for new line
+    messageInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    function toggleSettings() {
+      document.getElementById('settings').classList.toggle('open');
+    }
+
+    function updateUrlBadge() {
+      const badge = document.getElementById('urlBadge');
+      const url = webhookUrlInput.value;
+      if (url.includes('cxchat')) {
+        badge.textContent = 'CX Chat';
+      } else {
+        badge.textContent = 'Chat';
+      }
+    }
+
+    function addMessage(content, type = 'user') {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${type}`;
+      messageDiv.textContent = content;
+      chatContainer.appendChild(messageDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      return messageDiv;
+    }
+
+    function addBotMessage(content, details = null) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message bot';
+      
+      // content가 객체면 JSON으로 표시
+      if (typeof content === 'object') {
+        messageDiv.innerHTML = `<pre style="white-space: pre-wrap; margin: 0; font-family: inherit;">${JSON.stringify(content, null, 2)}</pre>`;
+      } else {
+        messageDiv.textContent = content;
+      }
+      
+      if (details) {
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'response-details';
+        detailsDiv.textContent = details;
+        messageDiv.appendChild(detailsDiv);
+      }
+      
+      chatContainer.appendChild(messageDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      const webhookUrl = webhookUrlInput.value.trim();
+      const userId = userIdInput.value.trim();
+
+      if (!message) return;
+      if (!webhookUrl) {
+        alert('Webhook URL을 입력해주세요');
+        return;
+      }
+
+      // Add user message
+      addMessage(message, 'user');
+      messageInput.value = '';
+      messageInput.style.height = 'auto';
+
+      // Add loading message
+      const loadingMsg = addMessage('응답 대기 중', 'loading');
+
+      // Disable button
+      sendBtn.disabled = true;
+
+      const startTime = Date.now();
+
+      try {
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: message,
+            userId: userId
+          })
+        });
+
+        const elapsed = Date.now() - startTime;
+
+        // Remove loading message
+        loadingMsg.remove();
+
+        if (response.ok) {
+          const data = await response.json();
+          addBotMessage(data, `✓ ${response.status} OK · ${elapsed}ms`);
+        } else {
+          const errorText = await response.text();
+          addMessage(`Error ${response.status}: ${errorText}`, 'error');
+        }
+      } catch (error) {
+        loadingMsg.remove();
+        addMessage(`네트워크 오류: ${error.message}`, 'error');
+      } finally {
+        sendBtn.disabled = false;
+        messageInput.focus();
+      }
+    }
+
+    // Focus input on load
+    messageInput.focus();
+  </script>
+</body>
+</html>
+
