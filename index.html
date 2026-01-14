@@ -453,8 +453,9 @@
     });
 
     // Enter to send, Shift+Enter for new line
+    // isComposing 체크로 한글 IME 중복 입력 방지
     messageInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
         e.preventDefault();
         sendMessage();
       }
