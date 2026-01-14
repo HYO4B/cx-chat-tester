@@ -367,6 +367,16 @@
       border-top: 1px solid var(--border);
     }
 
+    /* Reference URL Buttons */
+    .message.bot a {
+      transition: all 0.2s;
+    }
+
+    .message.bot a:hover {
+      background: var(--primary-dark) !important;
+      transform: translateY(-1px);
+    }
+
     /* Mobile */
     @media (max-width: 600px) {
       main {
@@ -527,8 +537,54 @@
       const messageDiv = document.createElement('div');
       messageDiv.className = 'message bot';
       
-      // content가 객체면 JSON으로 표시
-      if (typeof content === 'object') {
+      // API 응답 파싱
+      let output = null;
+      
+      // 배열 형태의 응답 처리: [{output: {...}}]
+      if (Array.isArray(content) && content[0]?.output) {
+        output = content[0].output;
+      } 
+      // 객체 형태의 응답 처리: {output: {...}}
+      else if (content?.output) {
+        output = content.output;
+      }
+      
+      if (output) {
+        // need_to_connect_manager가 true면 매니저 연결 메시지
+        if (output.need_to_connect_manager === true) {
+          messageDiv.innerHTML = `
+            <div style="margin-bottom: 8px;">담당 매니저에게 연결해 드릴게요. 잠시만 기다려 주세요! 🙋‍♂️</div>
+            <div style="font-size: 13px; color: var(--text-secondary);">더 정확한 안내를 위해 전문 상담사가 곧 연락드릴 예정입니다.</div>
+          `;
+        } else {
+          // answer 표시
+          const answerHtml = output.answer ? `<div>${output.answer}</div>` : '';
+          
+          // reference_url 버튼 생성
+          let urlButtonsHtml = '';
+          if (output.reference_url && Array.isArray(output.reference_url)) {
+            const validUrls = output.reference_url.filter(ref => ref.url && ref.title);
+            if (validUrls.length > 0) {
+              urlButtonsHtml = '<div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;">';
+              validUrls.forEach(ref => {
+                urlButtonsHtml += `
+                  <a href="${ref.url}" target="_blank" rel="noopener noreferrer" 
+                     style="display: inline-flex; align-items: center; gap: 4px; padding: 8px 12px; 
+                            background: var(--primary); color: white; border-radius: 8px; 
+                            text-decoration: none; font-size: 13px; font-weight: 500;
+                            transition: background 0.2s;">
+                    📎 ${ref.title}
+                  </a>
+                `;
+              });
+              urlButtonsHtml += '</div>';
+            }
+          }
+          
+          messageDiv.innerHTML = answerHtml + urlButtonsHtml;
+        }
+      } else if (typeof content === 'object') {
+        // 기타 객체는 JSON으로 표시
         messageDiv.innerHTML = `<pre style="white-space: pre-wrap; margin: 0; font-family: inherit;">${JSON.stringify(content, null, 2)}</pre>`;
       } else {
         messageDiv.textContent = content;
