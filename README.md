@@ -4,21 +4,27 @@
 
 ## 🚀 사용 방법
 
-### 온라인 (GitHub Pages)
-배포 후 `https://[username].github.io/[repo-name]` 에서 바로 사용 가능
+### 온라인
+https://hyo4b.github.io/cx-chat-tester/
 
 ### 로컬
 ```bash
-# 파일 열기
 open index.html
 ```
 
-## 📡 기본 설정
+## 🔐 보안
 
-| 항목 | 기본값 |
-|------|--------|
-| Webhook URL | `https://mkt-n8n.class101.net/webhook-test/chat` |
-| User ID | `cx_tester_001` |
+- Webhook URL은 코드에 포함되지 않습니다
+- 설정은 브라우저 localStorage에 Base64 인코딩되어 저장됩니다
+- URL 입력 필드는 기본적으로 `password` 타입으로 마스킹됩니다
+- "설정 초기화" 버튼으로 저장된 정보를 삭제할 수 있습니다
+
+## ⚙️ 최초 설정
+
+1. 사이트 접속 시 설정 패널이 자동으로 열립니다
+2. Webhook URL 입력 (팀 내부에서 공유받은 URL)
+3. User ID 설정 (선택)
+4. 설정은 자동 저장됩니다
 
 ## 📤 요청 형식
 
@@ -33,23 +39,13 @@ open index.html
 
 n8n 워크플로우에서 반환하는 JSON 응답이 그대로 표시됩니다.
 
-## 🛠 GitHub Pages 배포
+## 🛠 기능
 
-1. GitHub에 레포지토리 생성
-2. 코드 푸시
-3. Settings > Pages > Source: `main` branch 선택
-4. 배포 완료!
-
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/[username]/[repo-name].git
-git push -u origin main
-```
+- ⌨️ Enter로 전송, Shift+Enter로 줄바꿈
+- 👁 URL 보기/숨기기 토글
+- 💾 설정 자동 저장 (localStorage)
+- 📱 모바일 반응형 지원
 
 ## 📝 라이선스
 
 MIT License - 클래스101 내부 사용
-

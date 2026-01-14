@@ -399,15 +399,21 @@
       </div>
       <div class="settings-body">
         <div class="form-group">
-          <label>Webhook URL <span class="url-badge prod" id="urlBadge">PROD</span></label>
-          <select id="webhookUrl" onchange="updateUrlBadge()">
-            <option value="https://mkt-n8n.class101.net/webhook/chat">🟢 Production - /webhook/chat</option>
-            <option value="https://mkt-n8n.class101.net/webhook/cxchat">🟢 Production - /webhook/cxchat</option>
-          </select>
+          <label>Webhook URL <span class="url-badge prod" id="urlBadge">설정 필요</span></label>
+          <input type="password" id="webhookUrl" value="" placeholder="Webhook URL 입력 (저장됨)" onchange="saveSettings()">
+          <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px;">💡 URL은 브라우저에 암호화 저장됩니다</small>
         </div>
         <div class="form-group">
           <label>User ID</label>
-          <input type="text" id="userId" value="cx_tester_001" placeholder="User ID 입력">
+          <input type="text" id="userId" value="cx_tester_001" placeholder="User ID 입력" onchange="saveSettings()">
+        </div>
+        <div class="form-group" style="flex-direction: row; gap: 8px; margin-top: 8px;">
+          <button type="button" onclick="toggleUrlVisibility()" style="background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text-secondary); font-size: 12px; cursor: pointer;">
+            👁 URL 보기/숨기기
+          </button>
+          <button type="button" onclick="clearSettings()" style="background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--error); font-size: 12px; cursor: pointer;">
+            🗑 설정 초기화
+          </button>
         </div>
       </div>
     </div>
@@ -461,11 +467,50 @@
     function updateUrlBadge() {
       const badge = document.getElementById('urlBadge');
       const url = webhookUrlInput.value;
-      if (url.includes('cxchat')) {
-        badge.textContent = 'CX Chat';
+      if (!url) {
+        badge.textContent = '설정 필요';
+        badge.className = 'url-badge test';
       } else {
-        badge.textContent = 'Chat';
+        badge.textContent = '설정됨 ✓';
+        badge.className = 'url-badge prod';
       }
+    }
+
+    function saveSettings() {
+      const settings = {
+        webhookUrl: btoa(webhookUrlInput.value), // Base64 인코딩
+        userId: userIdInput.value
+      };
+      localStorage.setItem('cxChatSettings', JSON.stringify(settings));
+      updateUrlBadge();
+    }
+
+    function loadSettings() {
+      const saved = localStorage.getItem('cxChatSettings');
+      if (saved) {
+        try {
+          const settings = JSON.parse(saved);
+          webhookUrlInput.value = settings.webhookUrl ? atob(settings.webhookUrl) : '';
+          userIdInput.value = settings.userId || 'cx_tester_001';
+        } catch (e) {
+          console.error('설정 로드 실패:', e);
+        }
+      }
+      updateUrlBadge();
+    }
+
+    function clearSettings() {
+      if (confirm('저장된 설정을 모두 삭제하시겠습니까?')) {
+        localStorage.removeItem('cxChatSettings');
+        webhookUrlInput.value = '';
+        userIdInput.value = 'cx_tester_001';
+        updateUrlBadge();
+      }
+    }
+
+    function toggleUrlVisibility() {
+      const input = webhookUrlInput;
+      input.type = input.type === 'password' ? 'text' : 'password';
     }
 
     function addMessage(content, type = 'user') {
@@ -556,8 +601,14 @@
       }
     }
 
-    // Focus input on load
+    // Load settings and focus input on load
+    loadSettings();
     messageInput.focus();
+    
+    // 설정이 없으면 설정 패널 열기
+    if (!webhookUrlInput.value) {
+      document.getElementById('settings').classList.add('open');
+    }
   </script>
 </body>
 </html>
